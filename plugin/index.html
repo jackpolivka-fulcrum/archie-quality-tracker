@@ -275,14 +275,31 @@
       try { localStorage.removeItem(draftKey(id)); } catch {}
     }
 
+    function safeStringify(obj, max = 4000) {
+      try {
+        const seen = new WeakSet();
+        const s = JSON.stringify(obj, (k, v) => {
+          if (typeof v === 'function') return '[fn]';
+          if (typeof v === 'object' && v !== null) {
+            if (seen.has(v)) return '[circular]';
+            seen.add(v);
+          }
+          return v;
+        });
+        return s && s.length > max ? s.slice(0, max) + '…(truncated)' : s;
+      } catch (e) { return '[unstringifiable: ' + e.message + ']'; }
+    }
+
     async function bindToConversation(context) {
       const conv = context.conversation;
-      console.log('[archie] conversation:', conv);
+      console.log('[archie] conversation keys:', conv && Object.keys(conv));
+      console.log('[archie] conversation JSON:', safeStringify(conv));
 
       let email_body = '';
       try {
         const messages = await context.listMessages();
-        console.log('[archie] listMessages:', messages);
+        console.log('[archie] listMessages keys:', messages && Object.keys(messages));
+        console.log('[archie] listMessages JSON:', safeStringify(messages));
         const list = messages?.results || messages?._results || messages?.value || [];
         const firstInbound = list.find((m) => m?.is_inbound) || list[0];
         email_body = htmlToText(firstInbound?.body) || firstInbound?.text || '';
