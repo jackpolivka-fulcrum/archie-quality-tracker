@@ -75,17 +75,6 @@
     .status.error { color: var(--danger); }
     .status.success { color: var(--success); }
     .empty { color: var(--muted); padding: 12px 0; }
-    .body-preview {
-      max-height: 80px;
-      overflow-y: auto;
-      background: var(--bg-soft);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 6px 8px;
-      font-size: 12px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
     .mismatch {
       background: var(--warn-bg);
       border: 1px solid var(--warn-border);
@@ -127,11 +116,6 @@
       <div><span class="label">Customer:</span><span id="customer">—</span></div>
       <div><span class="label">Agent:</span><span id="agent">—</span></div>
     </div>
-
-    <fieldset>
-      <label class="field">First message</label>
-      <div id="body-preview" class="body-preview">—</div>
-    </fieldset>
 
     <form id="form">
       <fieldset>
@@ -190,13 +174,6 @@
     };
 
     const $ = (id) => document.getElementById(id);
-
-    function htmlToText(html) {
-      if (!html) return '';
-      const tmp = document.createElement('div');
-      tmp.innerHTML = html;
-      return (tmp.textContent || tmp.innerText || '').trim();
-    }
 
     function showApp() {
       $('loading').style.display = 'none';
@@ -284,19 +261,6 @@
     async function bindToConversation(context) {
       const conv = context.conversation;
 
-      let email_body = '';
-      try {
-        const messages = await context.listMessages();
-        const list = messages?.results || [];
-        const firstInbound =
-          list.find((m) => m?.status === 'inbound') || list[0];
-        const body = firstInbound?.content?.body || firstInbound?.body;
-        const text = firstInbound?.content?.text || firstInbound?.text;
-        email_body = htmlToText(body) || text || '';
-      } catch (err) {
-        console.error('Failed to list messages:', err);
-      }
-
       const handle = conv.recipient?.handle || '';
       const customer_label = emailDomain(handle) || handle || 'unknown';
       const tags = Array.isArray(conv.tags)
@@ -307,10 +271,8 @@
         id: conv.id,
         conversation_url: `https://app.frontapp.com/open/${conv.id}`,
         subject: conv.subject || '(no subject)',
-        customer_email: handle,
         customer_label,
         agent_name: conv.assignee?.name || conv.assignee?.username || 'unassigned',
-        email_body,
         tags,
       };
       state.viewing = null;
@@ -321,7 +283,6 @@
       link.href = state.bound.conversation_url;
       $('customer').textContent = state.bound.customer_label || '—';
       $('agent').textContent = state.bound.agent_name;
-      $('body-preview').textContent = state.bound.email_body || '(empty)';
       $('mismatch-banner').style.display = 'none';
 
       applyDraft(loadDraft(conv.id));
