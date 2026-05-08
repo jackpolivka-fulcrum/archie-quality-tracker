@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Archie Quality Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --border: #e1e4e8;
@@ -18,7 +21,7 @@
     }
     * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 13px;
       color: var(--text);
       margin: 0;
@@ -277,19 +280,32 @@
 
     async function bindToConversation(context) {
       const conv = context.conversation;
+      console.log('[archie] conversation:', conv);
+
       let email_body = '';
       try {
         const messages = await context.listMessages();
-        const first = messages?.results?.[0];
-        email_body = htmlToText(first?.body) || first?.text || '';
+        console.log('[archie] listMessages:', messages);
+        const list = messages?.results || messages?._results || messages?.value || [];
+        const firstInbound = list.find((m) => m?.is_inbound) || list[0];
+        email_body = htmlToText(firstInbound?.body) || firstInbound?.text || '';
       } catch (err) {
         console.error('Failed to list messages:', err);
       }
 
+      const handle = conv.recipient?.handle || '';
+      const company =
+        conv.contact?.account?.name ||
+        conv.contact?.accounts?.[0]?.name ||
+        conv.recipient?.contact?.account?.name ||
+        '';
+      const customer_label = company || handle || 'unknown';
+
       state.bound = {
         id: conv.id,
         subject: conv.subject || '(no subject)',
-        customer_email: conv.recipient?.handle || '',
+        customer_email: handle,
+        customer_label,
         agent_name: conv.assignee?.name || conv.assignee?.username || 'unassigned',
         email_body,
       };
@@ -297,7 +313,7 @@
 
       $('subject').textContent = state.bound.subject;
       $('conv-id').textContent = state.bound.id;
-      $('customer').textContent = state.bound.customer_email || '—';
+      $('customer').textContent = state.bound.customer_label || '—';
       $('agent').textContent = state.bound.agent_name;
       $('body-preview').textContent = state.bound.email_body || '(empty)';
       $('mismatch-banner').style.display = 'none';
