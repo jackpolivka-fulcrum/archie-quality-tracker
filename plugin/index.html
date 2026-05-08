@@ -173,9 +173,13 @@
   </div>
 
   <script>
+    // TODO: replace shared apiKey with Front signed-request verification.
+    // Today's key ships to every user's browser, so it's a drive-by-traffic
+    // gate, not real auth. Server should verify the X-Front-Signature header
+    // against Front's public key and drop the apiKey field entirely.
     const CONFIG = {
       apiUrl: '/capture',
-      apiKey: 'REPLACE_ME',
+      apiKey: 'ce67d9b3626f05148528107e6cdb4caa1f1143eab842edd238e0b9297c102717',
     };
     const DRAFT_PREFIX = 'archie-qt:draft:';
 
