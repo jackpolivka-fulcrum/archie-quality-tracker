@@ -419,11 +419,31 @@
         return;
       }
 
-      Front.contextUpdates.subscribe(loadContext);
-      Front.fetchContext().then(loadContext).catch((err) => {
-        console.error('fetchContext failed:', err);
-        $('loading').textContent = 'Failed to load conversation context.';
+      $('loading').textContent = 'SDK loaded, calling fetchContext()…';
+
+      // If fetchContext never resolves, surface that so we know the
+      // iframe-to-Front messaging is the broken link.
+      const timeout = setTimeout(() => {
+        $('loading').textContent =
+          'fetchContext() has not responded after 8s — the Front SDK loaded but Front has not sent context. Possible SDK/version mismatch.';
+      }, 8000);
+
+      Front.contextUpdates.subscribe((ctx) => {
+        clearTimeout(timeout);
+        $('loading').textContent = 'contextUpdates fired: ' + (ctx && ctx.type);
+        loadContext(ctx);
       });
+      Front.fetchContext()
+        .then((ctx) => {
+          clearTimeout(timeout);
+          $('loading').textContent = 'fetchContext resolved: ' + (ctx && ctx.type);
+          loadContext(ctx);
+        })
+        .catch((err) => {
+          clearTimeout(timeout);
+          console.error('fetchContext failed:', err);
+          $('loading').textContent = 'fetchContext rejected: ' + (err && err.message);
+        });
     });
   </script>
 </body>
