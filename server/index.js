@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -37,6 +38,7 @@ app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/capture', requireApiKey, captureRoute);
+app.use('/plugin', express.static(path.join(__dirname, '..', 'plugin')));
 
 app.use((err, _req, res, _next) => {
   console.error(err);
