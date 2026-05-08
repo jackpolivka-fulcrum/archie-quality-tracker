@@ -123,7 +123,7 @@
 
     <h1 id="subject">—</h1>
     <div class="ctx">
-      <div><span class="label">Conversation:</span><span id="conv-id">—</span></div>
+      <div><span class="label">Conversation:</span><a id="conv-link" href="#" target="_blank" rel="noopener">—</a></div>
       <div><span class="label">Customer:</span><span id="customer">—</span></div>
       <div><span class="label">Agent:</span><span id="agent">—</span></div>
     </div>
@@ -305,6 +305,7 @@
 
       state.bound = {
         id: conv.id,
+        conversation_url: `https://app.frontapp.com/open/${conv.id}`,
         subject: conv.subject || '(no subject)',
         customer_email: handle,
         customer_label,
@@ -315,7 +316,9 @@
       state.viewing = null;
 
       $('subject').textContent = state.bound.subject;
-      $('conv-id').textContent = state.bound.id;
+      const link = $('conv-link');
+      link.textContent = state.bound.id;
+      link.href = state.bound.conversation_url;
       $('customer').textContent = state.bound.customer_label || '—';
       $('agent').textContent = state.bound.agent_name;
       $('body-preview').textContent = state.bound.email_body || '(empty)';
@@ -383,10 +386,9 @@
       }
 
       const payload = {
-        conversation_id: state.bound.id,
+        conversation_url: state.bound.conversation_url,
         customer_email: state.bound.customer_email,
         agent_name: state.bound.agent_name,
-        email_body: state.bound.email_body,
         ai_prompt: $('ai_prompt').value,
         ai_output: $('ai_output').value,
         could_archie_resolve: radio.value,

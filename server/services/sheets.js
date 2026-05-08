@@ -38,7 +38,7 @@ async function appendRow(values) {
   if (!spreadsheetId) throw new Error('Missing GOOGLE_SHEET_ID');
 
   const sheetName = process.env.SHEET_NAME || 'Sheet1';
-  const range = `'${sheetName.replace(/'/g, "''")}'!A:K`;
+  const range = `'${sheetName.replace(/'/g, "''")}'!A:J`;
 
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.append({

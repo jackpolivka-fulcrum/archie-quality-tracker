@@ -4,10 +4,9 @@ const { appendRow } = require('../services/sheets');
 const router = express.Router();
 
 const REQUIRED_FIELDS = [
-  'conversation_id',
+  'conversation_url',
   'customer_email',
   'agent_name',
-  'email_body',
   'ai_prompt',
   'ai_output',
   'could_archie_resolve',
@@ -31,10 +30,9 @@ router.post('/', async (req, res) => {
 
   const row = [
     new Date().toISOString(),
-    body.conversation_id,
+    body.conversation_url,
     body.customer_email,
     body.agent_name,
-    body.email_body,
     body.ai_prompt,
     body.ai_output,
     body.could_archie_resolve,
