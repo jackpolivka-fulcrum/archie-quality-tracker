@@ -174,9 +174,8 @@
 
   <script>
     const CONFIG = {
-      // Google Apps Script web app /exec URL — see /apps-script/README.md
-      apiUrl: 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE',
-      apiKey: 'PASTE_SAME_API_KEY_AS_IN_APPS_SCRIPT_HERE',
+      apiUrl: '/capture',
+      apiKey: 'REPLACE_ME',
     };
     const DRAFT_PREFIX = 'archie-qt:draft:';
 
@@ -360,7 +359,6 @@
       }
 
       const payload = {
-        api_key: CONFIG.apiKey,
         conversation_id: state.bound.id,
         customer_email: state.bound.customer_email,
         agent_name: state.bound.agent_name,
@@ -378,13 +376,15 @@
       try {
         const res = await fetch(CONFIG.apiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': CONFIG.apiKey,
+          },
           body: JSON.stringify(payload),
-          redirect: 'follow',
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || data.error) {
-          throw new Error(data.error || `HTTP ${res.status}`);
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
         }
         statusEl.textContent = 'Saved.';
         statusEl.classList.add('success');

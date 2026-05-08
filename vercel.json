@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/index.js", "use": "@vercel/node" },
+    { "src": "plugin/**/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/health", "dest": "/api/index.js" },
+    { "src": "/capture", "dest": "/api/index.js" },
+    { "src": "/plugin/(.*)", "dest": "/plugin/$1" },
+    { "src": "/plugin", "dest": "/plugin/index.html" },
+    { "src": "/", "dest": "/plugin/index.html" }
+  ]
+}

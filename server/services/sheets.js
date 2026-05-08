@@ -33,9 +33,12 @@ function getSheetsClient() {
   return cachedClient;
 }
 
-async function appendRow(values, range = 'Sheet1!A:J') {
+async function appendRow(values) {
   const spreadsheetId = process.env.GOOGLE_SHEET_ID;
   if (!spreadsheetId) throw new Error('Missing GOOGLE_SHEET_ID');
+
+  const sheetName = process.env.SHEET_NAME || 'Sheet1';
+  const range = `'${sheetName.replace(/'/g, "''")}'!A:J`;
 
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.append({

@@ -19,7 +19,15 @@
       "Bash(git -c commit.gpgsign=false commit -m ' *)",
       "Bash(gh repo *)",
       "Bash(curl -sI http://localhost:3000/plugin/)",
-      "Bash(curl -sI http://localhost:3000/plugin/archie_logo.png)"
+      "Bash(curl -sI http://localhost:3000/plugin/archie_logo.png)",
+      "Bash(git push *)",
+      "Bash(gh api *)",
+      "Bash(gh run *)",
+      "Bash(xargs -I {} gh run cancel {})",
+      "Bash(gh workflow *)",
+      "Bash(curl -sI https://jackpolivka-fulcrum.github.io/archie-quality-tracker/)",
+      "Bash(curl -sL 'https://script.google.com/macros/s/AKfycbwDV-v3uDcaoTYbl4HEDjb1RocHfGDDTt0TNJvrxc16dJnQb4oj3Lkfvd1i-cITAM3flA/exec')",
+      "Bash(grep -E '\\\\.env\\(\\\\W|$\\)')"
     ]
   }
 }
