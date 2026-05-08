@@ -275,45 +275,33 @@
       try { localStorage.removeItem(draftKey(id)); } catch {}
     }
 
-    function safeStringify(obj, max = 4000) {
-      try {
-        const seen = new WeakSet();
-        const s = JSON.stringify(obj, (k, v) => {
-          if (typeof v === 'function') return '[fn]';
-          if (typeof v === 'object' && v !== null) {
-            if (seen.has(v)) return '[circular]';
-            seen.add(v);
-          }
-          return v;
-        });
-        return s && s.length > max ? s.slice(0, max) + '…(truncated)' : s;
-      } catch (e) { return '[unstringifiable: ' + e.message + ']'; }
+    function emailDomain(handle) {
+      if (!handle || typeof handle !== 'string') return '';
+      const at = handle.indexOf('@');
+      return at >= 0 ? handle.slice(at + 1) : '';
     }
 
     async function bindToConversation(context) {
       const conv = context.conversation;
-      console.log('[archie] conversation keys:', conv && Object.keys(conv));
-      console.log('[archie] conversation JSON:', safeStringify(conv));
 
       let email_body = '';
       try {
         const messages = await context.listMessages();
-        console.log('[archie] listMessages keys:', messages && Object.keys(messages));
-        console.log('[archie] listMessages JSON:', safeStringify(messages));
-        const list = messages?.results || messages?._results || messages?.value || [];
-        const firstInbound = list.find((m) => m?.is_inbound) || list[0];
-        email_body = htmlToText(firstInbound?.body) || firstInbound?.text || '';
+        const list = messages?.results || [];
+        const firstInbound =
+          list.find((m) => m?.status === 'inbound') || list[0];
+        const body = firstInbound?.content?.body || firstInbound?.body;
+        const text = firstInbound?.content?.text || firstInbound?.text;
+        email_body = htmlToText(body) || text || '';
       } catch (err) {
         console.error('Failed to list messages:', err);
       }
 
       const handle = conv.recipient?.handle || '';
-      const company =
-        conv.contact?.account?.name ||
-        conv.contact?.accounts?.[0]?.name ||
-        conv.recipient?.contact?.account?.name ||
-        '';
-      const customer_label = company || handle || 'unknown';
+      const customer_label = emailDomain(handle) || handle || 'unknown';
+      const tags = Array.isArray(conv.tags)
+        ? conv.tags.map((t) => t?.name).filter(Boolean)
+        : [];
 
       state.bound = {
         id: conv.id,
@@ -322,6 +310,7 @@
         customer_label,
         agent_name: conv.assignee?.name || conv.assignee?.username || 'unassigned',
         email_body,
+        tags,
       };
       state.viewing = null;
 
@@ -403,6 +392,7 @@
         could_archie_resolve: radio.value,
         what_should_be_updated: getCheckedValues('what_should_be_updated'),
         notes: $('notes').value || '',
+        tags: state.bound.tags || [],
       };
 
       submitBtn.disabled = true;

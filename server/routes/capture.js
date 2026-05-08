@@ -27,6 +27,8 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'what_should_be_updated must be an array' });
   }
 
+  const tags = Array.isArray(body.tags) ? body.tags : [];
+
   const row = [
     new Date().toISOString(),
     body.conversation_id,
@@ -38,6 +40,7 @@ router.post('/', async (req, res) => {
     body.could_archie_resolve,
     body.what_should_be_updated.join(', '),
     body.notes,
+    tags.join(', '),
   ];
 
   try {
