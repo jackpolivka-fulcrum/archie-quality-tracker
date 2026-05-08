@@ -5,7 +5,6 @@ const router = express.Router();
 
 const REQUIRED_FIELDS = [
   'conversation_url',
-  'customer_email',
   'agent_name',
   'ai_prompt',
   'ai_output',
@@ -31,7 +30,6 @@ router.post('/', async (req, res) => {
   const row = [
     new Date().toISOString(),
     body.conversation_url,
-    body.customer_email,
     body.agent_name,
     body.ai_prompt,
     body.ai_output,
