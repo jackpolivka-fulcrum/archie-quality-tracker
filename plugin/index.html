@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Archie Quality Tracker</title>
+  <script src="https://dl.frontapp.com/libs/frontjs.min.js"></script>
+  <style>
+    :root {
+      --border: #e1e4e8;
+      --text: #1f2328;
+      --muted: #656d76;
+      --accent: #0969da;
+      --bg-soft: #f6f8fa;
+      --warn-bg: #fff8c5;
+      --warn-border: #d4a72c;
+      --danger: #cf222e;
+      --success: #1a7f37;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      margin: 0;
+      padding: 12px;
+      background: #fff;
+    }
+    h1 { font-size: 14px; margin: 0 0 4px; }
+    .logo {
+      display: block;
+      height: 28px;
+      width: auto;
+      margin: 0 0 10px;
+    }
+    .ctx {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .ctx div { margin-bottom: 2px; }
+    .ctx span.label { color: var(--muted); margin-right: 4px; }
+    fieldset { border: none; padding: 0; margin: 0 0 12px; }
+    label.field { display: block; font-weight: 600; margin-bottom: 4px; }
+    textarea, input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      resize: vertical;
+    }
+    textarea { min-height: 60px; }
+    .radio-group, .checkbox-group { display: flex; flex-direction: column; gap: 4px; }
+    .radio-group label, .checkbox-group label { font-weight: normal; cursor: pointer; }
+    button.primary {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status { margin-top: 8px; font-size: 12px; }
+    .status.error { color: var(--danger); }
+    .status.success { color: var(--success); }
+    .empty { color: var(--muted); padding: 12px 0; }
+    .body-preview {
+      max-height: 80px;
+      overflow-y: auto;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .mismatch {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .mismatch strong { word-break: break-word; }
+    .mismatch button {
+      margin-top: 6px;
+      background: #fff;
+      border: 1px solid var(--warn-border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .draft-hint { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <img src="archie_logo.png" alt="archie" class="logo" />
+  <div id="loading" class="empty">Loading conversation…</div>
+  <div id="empty" class="empty" style="display: none;">Open a conversation to capture a quality entry.</div>
+
+  <div id="app" style="display: none;">
+    <div id="mismatch-banner" class="mismatch" style="display: none;">
+      <div>
+        Now viewing <strong id="mismatch-subject">—</strong>, but the form is locked to the conversation below.
+      </div>
+      <button type="button" id="switch-conversation">Switch to viewed conversation</button>
+      <div class="draft-hint">Your current draft is saved automatically and will reappear if you come back.</div>
+    </div>
+
+    <h1 id="subject">—</h1>
+    <div class="ctx">
+      <div><span class="label">Conversation:</span><span id="conv-id">—</span></div>
+      <div><span class="label">Customer:</span><span id="customer">—</span></div>
+      <div><span class="label">Agent:</span><span id="agent">—</span></div>
+    </div>
+
+    <fieldset>
+      <label class="field">First message</label>
+      <div id="body-preview" class="body-preview">—</div>
+    </fieldset>
+
+    <form id="form">
+      <fieldset>
+        <label class="field" for="ai_prompt">AI prompt</label>
+        <textarea id="ai_prompt" required></textarea>
+      </fieldset>
+
+      <fieldset>
+        <label class="field" for="ai_output">AI output</label>
+        <textarea id="ai_output" required></textarea>
+      </fieldset>
+
+      <fieldset>
+        <label class="field">Could Archie resolve?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="could_archie_resolve" value="Yes" required /> Yes</label>
+          <label><input type="radio" name="could_archie_resolve" value="No" /> No</label>
+          <label><input type="radio" name="could_archie_resolve" value="Partial" /> Partial</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <label class="field">What should be updated</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="what_should_be_updated" value="LaunchPad" /> LaunchPad</label>
+          <label><input type="checkbox" name="what_should_be_updated" value="API Access" /> API Access</label>
+          <label><input type="checkbox" name="what_should_be_updated" value="Prompt" /> Prompt</label>
+          <label><input type="checkbox" name="what_should_be_updated" value="Training Data" /> Training Data</label>
+          <label><input type="checkbox" name="what_should_be_updated" value="Other" /> Other</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <label class="field" for="notes">Notes (optional)</label>
+        <textarea id="notes"></textarea>
+      </fieldset>
+
+      <button type="submit" id="submit" class="primary">Save entry</button>
+      <div id="status" class="status"></div>
+    </form>
+  </div>
+
+  <script>
+    const CONFIG = {
+      apiUrl: 'http://localhost:3000/capture',
+      apiKey: 'REPLACE_ME',
+    };
+    const DRAFT_PREFIX = 'archie-qt:draft:';
+
+    const state = {
+      bound: null,
+      viewing: null,
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function htmlToText(html) {
+      if (!html) return '';
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return (tmp.textContent || tmp.innerText || '').trim();
+    }
+
+    function showApp() {
+      $('loading').style.display = 'none';
+      $('empty').style.display = 'none';
+      $('app').style.display = 'block';
+    }
+
+    function showEmpty() {
+      $('loading').style.display = 'none';
+      $('app').style.display = 'none';
+      $('empty').style.display = 'block';
+    }
+
+    function getCheckedValues(name) {
+      return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map((el) => el.value);
+    }
+
+    function formHasContent() {
+      return Boolean(
+        $('ai_prompt').value.trim() ||
+        $('ai_output').value.trim() ||
+        document.querySelector('input[name="could_archie_resolve"]:checked') ||
+        document.querySelector('input[name="what_should_be_updated"]:checked') ||
+        $('notes').value.trim()
+      );
+    }
+
+    function readForm() {
+      const radio = document.querySelector('input[name="could_archie_resolve"]:checked');
+      return {
+        ai_prompt: $('ai_prompt').value,
+        ai_output: $('ai_output').value,
+        could_archie_resolve: radio ? radio.value : '',
+        what_should_be_updated: getCheckedValues('what_should_be_updated'),
+        notes: $('notes').value,
+      };
+    }
+
+    function applyDraft(draft) {
+      $('form').reset();
+      if (!draft) return;
+      $('ai_prompt').value = draft.ai_prompt || '';
+      $('ai_output').value = draft.ai_output || '';
+      if (draft.could_archie_resolve) {
+        const radio = document.querySelector(
+          `input[name="could_archie_resolve"][value="${draft.could_archie_resolve}"]`
+        );
+        if (radio) radio.checked = true;
+      }
+      const updates = draft.what_should_be_updated || [];
+      document.querySelectorAll('input[name="what_should_be_updated"]').forEach((cb) => {
+        cb.checked = updates.includes(cb.value);
+      });
+      $('notes').value = draft.notes || '';
+    }
+
+    function draftKey(id) { return DRAFT_PREFIX + id; }
+
+    function saveDraft() {
+      if (!state.bound?.id) return;
+      try {
+        localStorage.setItem(draftKey(state.bound.id), JSON.stringify(readForm()));
+      } catch (err) {
+        console.warn('Could not save draft:', err);
+      }
+    }
+
+    function loadDraft(id) {
+      try {
+        const raw = localStorage.getItem(draftKey(id));
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
+
+    function clearDraft(id) {
+      try { localStorage.removeItem(draftKey(id)); } catch {}
+    }
+
+    async function bindToConversation(context) {
+      const conv = context.conversation;
+      let email_body = '';
+      try {
+        const messages = await context.listMessages();
+        const first = messages?.results?.[0];
+        email_body = htmlToText(first?.body) || first?.text || '';
+      } catch (err) {
+        console.error('Failed to list messages:', err);
+      }
+
+      state.bound = {
+        id: conv.id,
+        subject: conv.subject || '(no subject)',
+        customer_email: conv.recipient?.handle || '',
+        agent_name: conv.assignee?.name || conv.assignee?.username || 'unassigned',
+        email_body,
+      };
+      state.viewing = null;
+
+      $('subject').textContent = state.bound.subject;
+      $('conv-id').textContent = state.bound.id;
+      $('customer').textContent = state.bound.customer_email || '—';
+      $('agent').textContent = state.bound.agent_name;
+      $('body-preview').textContent = state.bound.email_body || '(empty)';
+      $('mismatch-banner').style.display = 'none';
+
+      applyDraft(loadDraft(conv.id));
+      showApp();
+    }
+
+    function showMismatch(context) {
+      state.viewing = {
+        id: context.conversation.id,
+        subject: context.conversation.subject || '(no subject)',
+        context,
+      };
+      $('mismatch-subject').textContent = state.viewing.subject;
+      $('mismatch-banner').style.display = 'block';
+    }
+
+    async function loadContext(context) {
+      if (!context || context.type !== 'singleConversation') {
+        if (!state.bound) showEmpty();
+        return;
+      }
+
+      const incomingId = context.conversation.id;
+
+      if (!state.bound) {
+        await bindToConversation(context);
+        return;
+      }
+
+      if (state.bound.id === incomingId) {
+        state.viewing = null;
+        $('mismatch-banner').style.display = 'none';
+        return;
+      }
+
+      if (!formHasContent()) {
+        await bindToConversation(context);
+        return;
+      }
+
+      showMismatch(context);
+    }
+
+    async function submitForm(e) {
+      e.preventDefault();
+      const statusEl = $('status');
+      const submitBtn = $('submit');
+      statusEl.textContent = '';
+      statusEl.className = 'status';
+
+      if (!state.bound) {
+        statusEl.textContent = 'No conversation loaded.';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      const radio = document.querySelector('input[name="could_archie_resolve"]:checked');
+      if (!radio) {
+        statusEl.textContent = 'Select a resolution option.';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      const payload = {
+        conversation_id: state.bound.id,
+        customer_email: state.bound.customer_email,
+        agent_name: state.bound.agent_name,
+        email_body: state.bound.email_body,
+        ai_prompt: $('ai_prompt').value,
+        ai_output: $('ai_output').value,
+        could_archie_resolve: radio.value,
+        what_should_be_updated: getCheckedValues('what_should_be_updated'),
+        notes: $('notes').value || '',
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving…';
+
+      try {
+        const res = await fetch(CONFIG.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': CONFIG.apiKey,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+        statusEl.textContent = 'Saved.';
+        statusEl.classList.add('success');
+        clearDraft(state.bound.id);
+        $('form').reset();
+      } catch (err) {
+        statusEl.textContent = `Failed to save: ${err.message}`;
+        statusEl.classList.add('error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save entry';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      $('form').addEventListener('submit', submitForm);
+      $('form').addEventListener('input', saveDraft);
+      $('form').addEventListener('change', saveDraft);
+
+      $('switch-conversation').addEventListener('click', async () => {
+        if (!state.viewing) return;
+        saveDraft();
+        await bindToConversation(state.viewing.context);
+      });
+
+      if (typeof Front === 'undefined') {
+        $('loading').textContent = 'Front SDK not available. Open this plugin inside Front.';
+        return;
+      }
+
+      Front.contextUpdates.subscribe(loadContext);
+      Front.fetchContext().then(loadContext).catch((err) => {
+        console.error('fetchContext failed:', err);
+        $('loading').textContent = 'Failed to load conversation context.';
+      });
+    });
+  </script>
+</body>
+</html>

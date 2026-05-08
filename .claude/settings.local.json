@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/jackfulcrum/Desktop/archie-quality-tracker/plugin/ 2>&1; ls /Users/jackfulcrum/Downloads/ 2>&1 | head -20)",
+      "Read(//Users/jackfulcrum/Downloads/**)",
+      "Bash(npm install *)",
+      "Bash(npm start *)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(chmod +x /Users/jackfulcrum/Desktop/archie-quality-tracker/scripts/smoke-test.sh)",
+      "Bash(bash /Users/jackfulcrum/Desktop/archie-quality-tracker/scripts/smoke-test.sh)",
+      "Bash(kill %1)",
+      "Bash(pkill -f 'node server/index.js')",
+      "Bash(node -e ' *)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
