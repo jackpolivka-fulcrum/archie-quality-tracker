@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Archie Quality Tracker</title>
-  <script src="https://dl.frontapp.com/libs/frontjs.min.js"></script>
   <style>
     :root {
       --border: #e1e4e8;
@@ -172,7 +171,9 @@
     </form>
   </div>
 
-  <script>
+  <script type="module">
+    import Front from 'https://esm.sh/@frontapp/plugin-sdk@1.10.0';
+
     // TODO: replace shared apiKey with Front signed-request verification.
     // Today's key ships to every user's browser, so it's a drive-by-traffic
     // gate, not real auth. Server should verify the X-Front-Signature header
@@ -403,48 +404,17 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      $('form').addEventListener('submit', submitForm);
-      $('form').addEventListener('input', saveDraft);
-      $('form').addEventListener('change', saveDraft);
+    $('form').addEventListener('submit', submitForm);
+    $('form').addEventListener('input', saveDraft);
+    $('form').addEventListener('change', saveDraft);
 
-      $('switch-conversation').addEventListener('click', async () => {
-        if (!state.viewing) return;
-        saveDraft();
-        await bindToConversation(state.viewing.context);
-      });
-
-      if (typeof Front === 'undefined') {
-        $('loading').textContent = 'Front SDK not available. Open this plugin inside Front.';
-        return;
-      }
-
-      $('loading').textContent = 'SDK loaded, calling fetchContext()…';
-
-      // If fetchContext never resolves, surface that so we know the
-      // iframe-to-Front messaging is the broken link.
-      const timeout = setTimeout(() => {
-        $('loading').textContent =
-          'fetchContext() has not responded after 8s — the Front SDK loaded but Front has not sent context. Possible SDK/version mismatch.';
-      }, 8000);
-
-      Front.contextUpdates.subscribe((ctx) => {
-        clearTimeout(timeout);
-        $('loading').textContent = 'contextUpdates fired: ' + (ctx && ctx.type);
-        loadContext(ctx);
-      });
-      Front.fetchContext()
-        .then((ctx) => {
-          clearTimeout(timeout);
-          $('loading').textContent = 'fetchContext resolved: ' + (ctx && ctx.type);
-          loadContext(ctx);
-        })
-        .catch((err) => {
-          clearTimeout(timeout);
-          console.error('fetchContext failed:', err);
-          $('loading').textContent = 'fetchContext rejected: ' + (err && err.message);
-        });
+    $('switch-conversation').addEventListener('click', async () => {
+      if (!state.viewing) return;
+      saveDraft();
+      await bindToConversation(state.viewing.context);
     });
+
+    Front.contextUpdates.subscribe(loadContext);
   </script>
 </body>
 </html>
